@@ -294,3 +294,40 @@ input {
     font-size: 34px;
   }
 }
+
+/* AUTH TABS */
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 30px;
+  padding: 5px;
+  border-radius: 10px;
+  background: #f3efeb;
+}
+
+.auth-tab {
+  padding: 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #786d66;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-tab.active {
+  background: white;
+  color: #5c3d2e;
+  box-shadow: 0 2px 8px rgba(60, 45, 35, 0.08);
+}
+
+.success-message {
+  margin: 0 0 15px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #edf7ed;
+  color: #356b3a;
+  font-size: 14px;
+}
