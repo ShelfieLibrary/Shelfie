@@ -4,7 +4,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
@@ -58,6 +58,34 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
+def get_authenticated_user(authorization: str = Header(...)):
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization header."
+        )
+
+    token = authorization.split(" ", 1)[1]
+
+    try:
+        user_response = supabase.auth.get_user(token)
+
+        if not user_response.user:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or expired session."
+            )
+
+        return user_response.user
+
+    except HTTPException:
+        raise
+
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired session."
+        )
 
 # =========================================================
 # BASIC ROUTES
@@ -170,6 +198,16 @@ def login_user(data: LoginRequest):
             "message": str(error)
         }
 
+@app.get("/api/session")
+def get_session(authorization: str = Header(...)):
+    user = get_authenticated_user(authorization)
+
+    return {
+        "success": True,
+        "message": "Session is valid",
+        "user_id": str(user.id),
+        "email": user.email
+    }
 
 # =========================================================
 # LOGOUT
