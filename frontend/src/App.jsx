@@ -1,122 +1,225 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
+
+const API_URL = "http://127.0.0.1:8000";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem("shelfieUser");
+
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleLogin(event) {
+    event.preventDefault();
+
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const response = await fetch(`${API_URL}/api/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        setMessage(data.message || "Login failed.");
+        return;
+      }
+
+      localStorage.setItem("shelfieToken", data.access_token);
+      localStorage.setItem(
+        "shelfieUser",
+        JSON.stringify(data.user)
+      );
+
+      setUser(data.user);
+      setEmail("");
+      setPassword("");
+      setMessage("");
+    } catch (error) {
+      setMessage(
+        "Unable to connect to the Shelfie server."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await fetch(`${API_URL}/api/logout`, {
+        method: "POST",
+      });
+    } catch (error) {
+      console.error("Logout request failed:", error);
+    }
+
+    localStorage.removeItem("shelfieToken");
+    localStorage.removeItem("shelfieUser");
+
+    setUser(null);
+    setEmail("");
+    setPassword("");
+    setMessage("");
+  }
+
+  if (user) {
+    return (
+      <div className="app">
+        <header className="navbar">
+          <div className="brand">Shelfie</div>
+
+          <button
+            className="logout-button"
+            onClick={handleLogout}
+          >
+            Log Out
+          </button>
+        </header>
+
+        <main className="dashboard">
+          <section className="welcome-card">
+            <p className="eyebrow">
+              Your digital bookshelf
+            </p>
+
+            <h1>
+              Welcome, {user.display_name || "Reader"}!
+            </h1>
+
+            <p className="welcome-text">
+              Discover books, organize your reading,
+              and keep track of what you want to read
+              next.
+            </p>
+
+            <div className="account-details">
+              <div>
+                <span>Account</span>
+                <strong>{user.email}</strong>
+              </div>
+
+              <div>
+                <span>Role</span>
+                <strong className="role">
+                  {user.role}
+                </strong>
+              </div>
+
+              <div>
+                <span>Status</span>
+                <strong>
+                  {user.account_status}
+                </strong>
+              </div>
+            </div>
+
+            {user.role === "admin" && (
+              <div className="admin-card">
+                <h2>Admin Access</h2>
+
+                <p>
+                  You are signed in with administrator
+                  privileges.
+                </p>
+              </div>
+            )}
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
+    <div className="login-page">
+      <div className="login-container">
+        <section className="login-intro">
+          <p className="eyebrow">Welcome to</p>
+
+          <h1>Shelfie</h1>
+
           <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+            Your personal digital library for
+            discovering books and organizing your
+            reading journey.
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        </section>
 
-      <div className="ticks"></div>
+        <section className="login-card">
+          <h2>Sign In</h2>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          <p className="login-subtitle">
+            Sign in to continue to your bookshelf.
+          </p>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+          <form onSubmit={handleLogin}>
+            <label htmlFor="email">
+              Email
+            </label>
+
+            <input
+              id="email"
+              type="email"
+              placeholder="reader@example.com"
+              value={email}
+              onChange={(event) =>
+                setEmail(event.target.value)
+              }
+              required
+            />
+
+            <label htmlFor="password">
+              Password
+            </label>
+
+            <input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(event) =>
+                setPassword(event.target.value)
+              }
+              required
+            />
+
+            {message && (
+              <p className="error-message">
+                {message}
+              </p>
+            )}
+
+            <button
+              className="login-button"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? "Signing In..." : "Sign In"}
+            </button>
+          </form>
+
+          <p className="signup-text">
+            New to Shelfie? Registration coming next.
+          </p>
+        </section>
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;
