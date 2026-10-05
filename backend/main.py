@@ -125,3 +125,19 @@ def login_user(data: LoginRequest):
             "success": False,
             "message": str(error)
         }
+
+@app.post("/api/logout")
+def logout_user():
+    try:
+        supabase.auth.sign_out()
+
+        return {
+            "success": True,
+            "message": "Logout successful"
+        }
+
+    except Exception as error:
+        return {
+            "success": False,
+            "message": str(error)
+        }
