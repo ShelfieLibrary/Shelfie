@@ -58,6 +58,28 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
+
+class BookData(BaseModel):
+    id: str
+    title: str
+    authors: list[str] = []
+    description: str | None = None
+    isbn: str | None = None
+    cover_url: str | None = None
+    published_date: str | None = None
+    page_count: int | None = None
+    preview_link: str | None = None
+
+
+class ShelfRequest(BaseModel):
+    book: BookData
+    status: str
+
+
+# =========================================================
+# AUTHENTICATION / SESSION VALIDATION
+# =========================================================
+
 def get_authenticated_user(authorization: str = Header(...)):
     if not authorization.startswith("Bearer "):
         raise HTTPException(
@@ -68,6 +90,11 @@ def get_authenticated_user(authorization: str = Header(...)):
     token = authorization.split(" ", 1)[1]
 
     try:
+        # Set the user's JWT on the Supabase PostgREST client
+        # so database operations are performed as the
+        # authenticated user and RLS policies can apply.
+        supabase.postgrest.auth(token)
+
         user_response = supabase.auth.get_user(token)
 
         if not user_response.user:
@@ -86,6 +113,7 @@ def get_authenticated_user(authorization: str = Header(...)):
             status_code=401,
             detail="Invalid or expired session."
         )
+
 
 # =========================================================
 # BASIC ROUTES
@@ -198,6 +226,11 @@ def login_user(data: LoginRequest):
             "message": str(error)
         }
 
+
+# =========================================================
+# SESSION
+# =========================================================
+
 @app.get("/api/session")
 def get_session(authorization: str = Header(...)):
     user = get_authenticated_user(authorization)
@@ -208,6 +241,7 @@ def get_session(authorization: str = Header(...)):
         "user_id": str(user.id),
         "email": user.email
     }
+
 
 # =========================================================
 # LOGOUT
@@ -310,7 +344,6 @@ def search_demo_books(search_term):
         if search_lower in searchable_text:
             matching_books.append(book)
 
-    # Return all demo books if there is no exact demo match.
     if not matching_books:
         matching_books = DEMO_BOOKS
 
@@ -442,3 +475,65 @@ def search_books(q: str):
             "count": len(demo_books),
             "books": demo_books
         }
+
+
+# =========================================================
+# ADD BOOK TO USER SHELF
+# =========================================================
+
+@app.post("/api/shelf")
+def add_to_shelf(
+    data: ShelfRequest,
+    authorization: str = Header(...)
+):
+    user = get_authenticated_user(authorization)
+
+    if data.status not in [
+        "want_to_read",
+        "reading",
+        "completed"
+    ]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid shelf status."
+        )
+
+    book_data = {
+        "id": data.book.id,
+        "title": data.book.title,
+        "description": data.book.description,
+        "isbn": data.book.isbn,
+        "cover_url": data.book.cover_url,
+        "published_date": data.book.published_date,
+        "page_count": data.book.page_count,
+        "preview_link": data.book.preview_link
+    }
+
+    try:
+        supabase.table("books").upsert(
+            book_data
+        ).execute()
+
+        shelf_data = {
+            "user_id": str(user.id),
+            "book_id": data.book.id,
+            "status": data.status
+        }
+
+        supabase.table("user_books").upsert(
+            shelf_data,
+            on_conflict="user_id,book_id"
+        ).execute()
+
+        return {
+            "success": True,
+            "message": "Book added to shelf",
+            "book_id": data.book.id,
+            "status": data.status
+        }
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
