@@ -20,7 +20,7 @@ CREATE TABLE public.profiles (
 
     display_name VARCHAR(100) NOT NULL,
 
-    avatar_url TEXT,
+    avatar VARCHAR(50) NOT NULL DEFAULT 'default',
 
     role VARCHAR(20) NOT NULL DEFAULT 'user'
         CHECK (role IN ('user', 'admin')),
@@ -91,7 +91,7 @@ CREATE TABLE public.user_activities (
 
 
 -- =========================================================
--- USER BOOKS / READING SHELVES
+-- USER BOOKS / READING LIST
 -- =========================================================
 
 CREATE TABLE public.user_books (
@@ -174,9 +174,8 @@ ALTER TABLE public.user_books ENABLE ROW LEVEL SECURITY;
 
 -- =========================================================
 -- PROFILE POLICIES
--- =========================================================
--- Authenticated Shelfie users need profile information for
--- login, role identification, and application navigation.
+-- Authenticated users need profile information for login,
+-- role identification, and application navigation.
 -- =========================================================
 
 CREATE POLICY "Authenticated users can read profiles"
@@ -184,3 +183,91 @@ ON public.profiles
 FOR SELECT
 TO authenticated
 USING (true);
+
+
+-- =========================================================
+-- BOOK POLICIES
+-- Anyone can read saved books. Logged-in users can save
+-- books (upsert needs both insert and update).
+-- =========================================================
+
+CREATE POLICY "Anyone can read books"
+ON public.books
+FOR SELECT
+TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Authenticated users can add books"
+ON public.books
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Authenticated users can update books"
+ON public.books
+FOR UPDATE
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+
+-- =========================================================
+-- READING LIST POLICIES
+-- Reading lists are public. Users can only change their own.
+-- =========================================================
+
+CREATE POLICY "Anyone can read reading lists"
+ON public.user_books
+FOR SELECT
+TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Users can add to their own list"
+ON public.user_books
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own list"
+ON public.user_books
+FOR UPDATE
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can remove from their own list"
+ON public.user_books
+FOR DELETE
+TO authenticated
+USING (auth.uid() = user_id);
+
+
+-- =========================================================
+-- USER ACTIVITY POLICIES
+-- Users can only see and record their own activity.
+-- =========================================================
+
+CREATE POLICY "Users can read their own activity"
+ON public.user_activities
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can record their own activity"
+ON public.user_activities
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+
+-- =========================================================
+-- TEST ADMIN ACCOUNT (run separately, after registering)
+-- Register the admin account through the app first, then
+-- replace the email below and run this statement.
+-- =========================================================
+
+-- UPDATE public.profiles
+-- SET role = 'admin'
+-- WHERE id = (
+--     SELECT id FROM auth.users WHERE email = 'admin@test.com'
+-- );
