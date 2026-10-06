@@ -20,6 +20,11 @@ function App() {
   const [messageType, setMessageType] = useState("error");
   const [loading, setLoading] = useState(false);
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [books, setBooks] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [shelfMessage, setShelfMessage] = useState("");
+
   function switchMode(mode) {
     setAuthMode(mode);
     setDisplayName("");
@@ -132,6 +137,94 @@ function App() {
     setPassword("");
     setMessage("");
     setAuthMode("login");
+    setBooks([]);
+    setSearchTerm("");
+    setShelfMessage("");
+  }
+
+  async function handleBookSearch(event) {
+    event.preventDefault();
+
+    const query = searchTerm.trim();
+
+    if (!query) {
+      setBooks([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    setShelfMessage("");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/books/search?q=${encodeURIComponent(query)}`
+      );
+
+      const data = await response.json();
+
+      if (!data.success) {
+        setShelfMessage(
+          data.message || "Book search failed."
+        );
+        setBooks([]);
+        return;
+      }
+
+      setBooks(data.books || []);
+    } catch (error) {
+      setShelfMessage(
+        "Unable to connect to the Shelfie server."
+      );
+      setBooks([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  }
+
+  async function handleAddToShelf(book) {
+    const token = localStorage.getItem("shelfieToken");
+
+    if (!token) {
+      setShelfMessage(
+        "Please sign in before adding a book to your shelf."
+      );
+      return;
+    }
+
+    setShelfMessage("");
+
+    try {
+      const response = await fetch(`${API_URL}/api/shelf`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          book,
+          status: "want_to_read",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setShelfMessage(
+          data.detail ||
+            data.message ||
+            "Unable to add book to shelf."
+        );
+        return;
+      }
+
+      setShelfMessage(
+        `"${book.title}" was added to your shelf.`
+      );
+    } catch (error) {
+      setShelfMessage(
+        "Unable to connect to the Shelfie server."
+      );
+    }
   }
 
   if (user) {
@@ -194,6 +287,85 @@ function App() {
                 </p>
               </div>
             )}
+          </section>
+
+          <section className="book-search-section">
+            <h2>Find a Book</h2>
+
+            <p>
+              Search for a book and add it to your
+              reading list.
+            </p>
+
+            <form
+              className="book-search-form"
+              onSubmit={handleBookSearch}
+            >
+              <input
+                type="text"
+                placeholder="Search by title or author"
+                value={searchTerm}
+                onChange={(event) =>
+                  setSearchTerm(event.target.value)
+                }
+              />
+
+              <button
+                type="submit"
+                disabled={searchLoading}
+              >
+                {searchLoading
+                  ? "Searching..."
+                  : "Search"}
+              </button>
+            </form>
+
+            {shelfMessage && (
+              <p className="success-message">
+                {shelfMessage}
+              </p>
+            )}
+
+            <div className="book-results">
+              {books.map((book) => (
+                <article
+                  className="book-card"
+                  key={book.id}
+                >
+                  {book.cover_url && (
+                    <img
+                      src={book.cover_url}
+                      alt={`${book.title} cover`}
+                    />
+                  )}
+
+                  <div className="book-info">
+                    <h3>{book.title}</h3>
+
+                    <p>
+                      {book.authors?.length
+                        ? book.authors.join(", ")
+                        : "Unknown author"}
+                    </p>
+
+                    {book.published_date && (
+                      <small>
+                        Published: {book.published_date}
+                      </small>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleAddToShelf(book)
+                      }
+                    >
+                      Add to Shelf
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
           </section>
         </main>
       </div>
@@ -297,7 +469,9 @@ function App() {
                   type="submit"
                   disabled={loading}
                 >
-                  {loading ? "Signing In..." : "Sign In"}
+                  {loading
+                    ? "Signing In..."
+                    : "Sign In"}
                 </button>
               </form>
             </>
