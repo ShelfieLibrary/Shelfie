@@ -4,8 +4,8 @@
 -- Tables implemented for Sprint 2:
 -- 1. profiles
 -- 2. books
--- 3. user_activities
--- 4. user_books
+-- 3. user_books
+-- 4. book_reviews
 -- =========================================================
 
 
@@ -61,36 +61,6 @@ CREATE TABLE public.books (
 
 
 -- =========================================================
--- USER ACTIVITIES
--- =========================================================
-
-CREATE TABLE public.user_activities (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-
-    user_id UUID NOT NULL
-        REFERENCES public.profiles(id)
-        ON DELETE CASCADE,
-
-    book_id VARCHAR(50) NOT NULL
-        REFERENCES public.books(id)
-        ON DELETE CASCADE,
-
-    activity_type VARCHAR(30) NOT NULL
-        CHECK (
-            activity_type IN (
-                'viewed_book',
-                'submitted_review',
-                'posted_discussion'
-            )
-        ),
-
-    reference_id BIGINT,
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-
--- =========================================================
 -- USER BOOKS / READING LIST
 -- =========================================================
 
@@ -117,6 +87,35 @@ CREATE TABLE public.user_books (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     PRIMARY KEY (user_id, book_id)
+);
+
+
+-- =========================================================
+-- BOOK REVIEWS
+-- One 1-5 star review per user per book.
+-- =========================================================
+
+CREATE TABLE public.book_reviews (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    user_id UUID NOT NULL
+        REFERENCES public.profiles(id)
+        ON DELETE CASCADE,
+
+    book_id VARCHAR(50) NOT NULL
+        REFERENCES public.books(id)
+        ON DELETE CASCADE,
+
+    rating SMALLINT NOT NULL
+        CHECK (rating BETWEEN 1 AND 5),
+
+    review_text TEXT,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    UNIQUE (user_id, book_id)
 );
 
 
@@ -168,8 +167,8 @@ EXECUTE FUNCTION public.handle_new_user();
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.books ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_books ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.book_reviews ENABLE ROW LEVEL SECURITY;
 
 
 -- =========================================================
@@ -243,21 +242,41 @@ USING (auth.uid() = user_id);
 
 
 -- =========================================================
--- USER ACTIVITY POLICIES
--- Users can only see and record their own activity.
+-- BOOK REVIEW POLICIES
+-- Reviews are public. Users can only write, edit, and delete
+-- their own. Admins can delete any review.
 -- =========================================================
 
-CREATE POLICY "Users can read their own activity"
-ON public.user_activities
+CREATE POLICY "Anyone can read reviews"
+ON public.book_reviews
 FOR SELECT
-TO authenticated
-USING (auth.uid() = user_id);
+TO anon, authenticated
+USING (true);
 
-CREATE POLICY "Users can record their own activity"
-ON public.user_activities
+CREATE POLICY "Users can write their own reviews"
+ON public.book_reviews
 FOR INSERT
 TO authenticated
 WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can edit their own reviews"
+ON public.book_reviews
+FOR UPDATE
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users and admins can delete reviews"
+ON public.book_reviews
+FOR DELETE
+TO authenticated
+USING (
+    auth.uid() = user_id
+    OR EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE id = auth.uid() AND role = 'admin'
+    )
+);
 
 
 -- =========================================================
