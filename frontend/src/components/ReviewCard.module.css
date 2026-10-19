@@ -1,0 +1,56 @@
+.card {
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.heading,
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.heading {
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.heading span {
+  color: #c98b16;
+  letter-spacing: 2px;
+}
+
+.reviewText {
+  margin: 0 0 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.form,
+.flagForm {
+  display: grid;
+  gap: 10px;
+}
+
+.form label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form textarea,
+.flagForm input,
+.form select {
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  font: inherit;
+}
+
+.form textarea {
+  min-height: 100px;
+  resize: vertical;
+}

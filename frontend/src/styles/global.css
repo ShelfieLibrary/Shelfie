@@ -1,0 +1,44 @@
+:root {
+  font-family: Inter, Arial, sans-serif;
+  color: #252525;
+  background: #f7f5f2;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --color-primary: #5c3d2e;
+  --color-primary-dark: #432b20;
+  --color-primary-soft: #eee8e3;
+  --color-background: #f7f5f2;
+  --color-heading: #3d2b22;
+  --color-text: #252525;
+  --color-muted: #6d6864;
+  --color-border: #ded7d1;
+  --color-success: #356b3a;
+  --color-error: #a23434;
+  --shadow-card: 0 15px 40px rgba(60, 45, 35, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+p {
+  overflow-wrap: anywhere;
+}

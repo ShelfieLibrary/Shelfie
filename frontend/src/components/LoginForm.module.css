@@ -1,0 +1,70 @@
+.card {
+  padding: 38px;
+  border-radius: 18px;
+  background: white;
+  box-shadow: var(--shadow-card);
+}
+
+.card h2 {
+  margin: 0 0 8px;
+  font-size: 30px;
+}
+
+.subtitle {
+  margin: 0 0 26px;
+  color: var(--color-muted);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-bottom: 28px;
+  padding: 5px;
+  border-radius: 10px;
+  background: var(--color-primary-soft);
+}
+
+.tabs button {
+  padding: 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.tabs .activeTab {
+  background: white;
+  color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(60, 45, 35, 0.08);
+}
+
+.form {
+  display: grid;
+  gap: 17px;
+}
+
+.form small {
+  margin-top: -10px;
+  color: var(--color-muted);
+}
+
+.error,
+.success {
+  margin: 0;
+  padding: 11px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.error {
+  background: #fff0f0;
+  color: var(--color-error);
+}
+
+.success {
+  background: #edf7ed;
+  color: var(--color-success);
+}
