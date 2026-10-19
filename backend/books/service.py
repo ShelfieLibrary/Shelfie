@@ -3,6 +3,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from core.config import GOOGLE_BOOKS_API_KEY
+from core.database import supabase
 
 
 DEMO_BOOKS = [
@@ -89,11 +90,18 @@ def search_books(search_term: str):
 
         return {"success": True, "source": "google_books", "count": len(books), "books": books}
     except Exception as error:
-        books = _demo_results(query)
+        response = supabase.table("books").select("*").limit(1000).execute()
+        needle = query.casefold()
+        books = [
+            {**book, "authors": book.get("authors") or []}
+            for book in response.data
+            if any(needle in str(book.get(field) or "").casefold()
+                   for field in ("title", "isbn", "id"))
+        ]
         return {
             "success": True,
-            "source": "demo_fallback",
-            "message": "Google Books is temporarily unavailable. Showing demo results.",
+            "source": "saved_books_fallback",
+            "message": "Google Books is temporarily unavailable. Showing matching saved books.",
             "google_error": str(error),
             "count": len(books),
             "books": books,
