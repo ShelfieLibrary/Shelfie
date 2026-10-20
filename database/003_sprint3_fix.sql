@@ -11,3 +11,9 @@ ON public.profiles FOR SELECT TO anon USING (true);
 
 ALTER TABLE public.books
 ADD COLUMN IF NOT EXISTS authors TEXT[] NOT NULL DEFAULT '{}';
+
+CREATE POLICY "Anyone can read books"
+ON public.books
+FOR SELECT
+TO anon
+USING (true);
