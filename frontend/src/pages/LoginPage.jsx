@@ -1,8 +1,9 @@
 import LoginForm from "../components/LoginForm";
+import Button from "../components/ui/Button";
 import styles from "./LoginPage.module.css";
 
 
-function LoginPage({ onAuthenticated }) {
+function LoginPage({ onAuthenticated, onCancel }) {
   return (
     <main className={styles.page}>
       <div className={styles.container}>
@@ -13,6 +14,11 @@ function LoginPage({ onAuthenticated }) {
             Your personal digital library for discovering books, sharing reviews,
             and organizing your reading journey.
           </p>
+          {onCancel && (
+            <Button type="button" variant="text" onClick={onCancel}>
+              ← Continue browsing as a guest
+            </Button>
+          )}
         </section>
         <LoginForm onAuthenticated={onAuthenticated} />
       </div>

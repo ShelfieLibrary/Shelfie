@@ -1,5 +1,6 @@
 from fastapi import Header, HTTPException
 
+from core.config import SUPABASE_KEY
 from core.database import supabase
 
 
@@ -24,3 +25,10 @@ def get_authenticated_user(authorization: str = Header(...)):
             status_code=401,
             detail="Invalid or expired session.",
         ) from error
+
+
+def get_optional_user(authorization: str | None = Header(None)):
+    if not authorization:
+        supabase.postgrest.auth(SUPABASE_KEY)
+        return None
+    return get_authenticated_user(authorization)

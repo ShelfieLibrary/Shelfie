@@ -1,0 +1,161 @@
+.page {
+  width: min(1100px, 86%);
+  margin: 0 auto;
+  padding: 30px 0 80px;
+}
+
+.bookCard,
+.section {
+  margin-top: 20px;
+  padding: 36px;
+  border-radius: 18px;
+  background: white;
+  box-shadow: var(--shadow-card);
+}
+
+.bookCard {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 36px;
+}
+
+.cover,
+.coverPlaceholder {
+  width: 200px;
+  height: 300px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.coverPlaceholder {
+  display: grid;
+  place-items: center;
+  background: var(--color-primary-soft);
+  color: var(--color-muted);
+}
+
+.details h1 {
+  margin: 0 0 8px;
+  color: var(--color-heading);
+  font-size: clamp(28px, 4vw, 38px);
+}
+
+.authors {
+  margin: 0 0 16px;
+  color: var(--color-muted);
+  font-size: 18px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.meta span {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.description {
+  margin: 0 0 24px;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.previewLink {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.section h2 {
+  margin: 0 0 12px;
+  color: var(--color-heading);
+}
+
+.reviewForm {
+  display: grid;
+  gap: 15px;
+  margin: 20px 0 24px;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--color-background);
+}
+
+.reviewForm label {
+  display: grid;
+  gap: 7px;
+  font-weight: 700;
+}
+
+.reviewForm select,
+.reviewForm textarea {
+  padding: 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: white;
+  font: inherit;
+}
+
+.reviewForm select {
+  width: 150px;
+}
+
+.reviewForm textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.reviewForm button {
+  justify-self: start;
+}
+
+.reviewList {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.success,
+.error {
+  margin: 20px 0 0;
+  padding: 13px 16px;
+  border-radius: 8px;
+}
+
+.success {
+  background: #edf7ed;
+  color: var(--color-success);
+}
+
+.error {
+  background: #fff0f0;
+  color: var(--color-error);
+}
+
+@media (max-width: 800px) {
+  .bookCard {
+    grid-template-columns: 1fr;
+    padding: 25px;
+  }
+
+  .cover,
+  .coverPlaceholder {
+    margin: 0 auto;
+  }
+
+  .section {
+    padding: 25px;
+  }
+}

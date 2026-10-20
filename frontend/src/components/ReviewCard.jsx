@@ -4,7 +4,7 @@ import styles from "./ReviewCard.module.css";
 import Button from "./ui/Button";
 
 
-function ReviewCard({ review, onUpdate, onDelete, onFlag }) {
+function ReviewCard({ review, onUpdate, onDelete, onFlag, onRequireLogin }) {
   const [editing, setEditing] = useState(false);
   const [rating, setRating] = useState(review.rating);
   const [reviewText, setReviewText] = useState(review.review_text);
@@ -72,7 +72,11 @@ function ReviewCard({ review, onUpdate, onDelete, onFlag }) {
       )}
 
       {!review.is_owner && !flagging && (
-        <Button type="button" variant="text" onClick={() => setFlagging(true)}>
+        <Button
+          type="button"
+          variant="text"
+          onClick={() => (onRequireLogin ? onRequireLogin() : setFlagging(true))}
+        >
           Flag Review
         </Button>
       )}

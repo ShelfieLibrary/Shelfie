@@ -6,7 +6,7 @@ from books.router import router as books_router
 from core.config import FRONTEND_ORIGINS
 from reviews.router import router as reviews_router
 from shelf.router import router as shelf_router
-
+from flags.router import router as flags_router
 
 app = FastAPI(title="Shelfie API")
 
@@ -22,7 +22,7 @@ app.include_router(auth_router)
 app.include_router(books_router)
 app.include_router(shelf_router)
 app.include_router(reviews_router)
-
+app.include_router(flags_router)
 
 @app.get("/")
 def home():

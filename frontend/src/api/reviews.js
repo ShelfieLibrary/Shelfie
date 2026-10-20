@@ -2,9 +2,7 @@ import { apiRequest } from "./client";
 
 
 export function getReviews(bookId) {
-  return apiRequest(`/api/books/${encodeURIComponent(bookId)}/reviews`, {
-    authenticated: true,
-  });
+  return apiRequest(`/api/books/${encodeURIComponent(bookId)}/reviews`);
 }
 
 

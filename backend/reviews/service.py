@@ -16,7 +16,7 @@ def _display_names(user_ids: set[str]):
     return {row["id"]: row["display_name"] for row in response.data}
 
 
-def list_reviews(book_id: str, current_user_id: str):
+def list_reviews(book_id: str, current_user_id: str | None):
     response = (
         supabase.table("book_reviews")
         .select("id,user_id,book_id,rating,review_text,created_at,updated_at")
@@ -95,36 +95,3 @@ def delete_review(user_id: str, review_id: int):
         raise LookupError("Review not found or you do not have permission to delete it.")
 
     return {"success": True, "message": "Review deleted successfully."}
-
-
-def flag_review(user_id: str, review_id: int, reason: str | None):
-    review_response = (
-        supabase.table("book_reviews")
-        .select("id,user_id")
-        .eq("id", review_id)
-        .limit(1)
-        .execute()
-    )
-    if not review_response.data:
-        raise LookupError("Review not found.")
-    if review_response.data[0]["user_id"] == user_id:
-        raise ValueError("You cannot flag your own review.")
-
-    response = (
-        supabase.table("content_flags")
-        .insert(
-            {
-                "review_id": review_id,
-                "user_id": user_id,
-                "reason": reason.strip() if reason and reason.strip() else None,
-                "status": "pending",
-            }
-        )
-        .execute()
-    )
-
-    return {
-        "success": True,
-        "message": "Review flagged for administrator review.",
-        "flag": response.data[0] if response.data else None,
-    }

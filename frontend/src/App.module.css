@@ -15,9 +15,13 @@
 }
 
 .brand {
+  padding: 0;
+  border: none;
+  background: none;
   font-size: 28px;
   font-weight: 800;
   color: var(--color-primary);
+  cursor: pointer;
 }
 
 .navUser {
@@ -26,6 +30,8 @@
   gap: 16px;
   font-weight: 600;
 }
+
+
 
 @media (max-width: 600px) {
   .navUser span {

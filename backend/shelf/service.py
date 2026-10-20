@@ -1,23 +1,9 @@
 from books.schemas import BookData
+from books.service import save_book
 from core.database import supabase
 
 
 VALID_STATUSES = {"want_to_read", "reading", "completed"}
-
-
-def save_book(book: BookData):
-    supabase.table("books").upsert(
-        {
-            "id": book.id,
-            "title": book.title,
-            "description": book.description,
-            "isbn": book.isbn,
-            "cover_url": book.cover_url,
-            "published_date": book.published_date,
-            "page_count": book.page_count,
-            "preview_link": book.preview_link,
-        }
-    ).execute()
 
 
 def add_to_shelf(user_id: str, book: BookData, status: str):

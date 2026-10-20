@@ -4,6 +4,7 @@ import { logout } from "./api/auth";
 import Button from "./components/ui/Button";
 import Dashboard from "./pages/Dashboard";
 import LoginPage from "./pages/LoginPage";
+import ProfilePage from "./pages/ProfilePage";
 import styles from "./App.module.css";
 
 
@@ -12,9 +13,12 @@ function App() {
     const savedUser = localStorage.getItem("shelfieUser");
     return savedUser ? JSON.parse(savedUser) : null;
   });
+  const [showLogin, setShowLogin] = useState(false);
+  const [page, setPage] = useState("dashboard");
 
   function handleAuthenticated(authenticatedUser) {
     setUser(authenticatedUser);
+    setShowLogin(false);
   }
 
   async function handleLogout() {
@@ -26,25 +30,50 @@ function App() {
       localStorage.removeItem("shelfieToken");
       localStorage.removeItem("shelfieUser");
       setUser(null);
+      setPage("dashboard");
     }
   }
 
-  if (!user) {
-    return <LoginPage onAuthenticated={handleAuthenticated} />;
+  if (showLogin && !user) {
+    return (
+      <LoginPage
+        onAuthenticated={handleAuthenticated}
+        onCancel={() => setShowLogin(false)}
+      />
+    );
   }
 
   return (
     <div className={styles.app}>
       <header className={styles.navbar}>
-        <div className={styles.brand}>Shelfie</div>
+        <button
+          type="button"
+          className={styles.brand}
+          onClick={() => setPage("dashboard")}
+        >
+          Shelfie
+        </button>
         <div className={styles.navUser}>
-          <span>{user.display_name}</span>
-          <Button variant="secondary" onClick={handleLogout}>
-            Log Out
-          </Button>
+          {user ? (
+            <>
+              <Button variant="secondary" onClick={() => setPage("profile")}>
+                {user.display_name || "Profile"}
+              </Button>
+              <Button variant="secondary" onClick={handleLogout}>
+                Log Out
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => setShowLogin(true)}>Log In</Button>
+          )}
         </div>
       </header>
-      <Dashboard user={user} />
+
+      {page === "profile" && user ? (
+        <ProfilePage user={user} />
+      ) : (
+        <Dashboard user={user} onRequireLogin={() => setShowLogin(true)} />
+      )}
     </div>
   );
 }

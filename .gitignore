@@ -1,3 +1,20 @@
+# Environment files (keys and local settings)
+.env
+.env.*
+!.env.example
+
+# Frontend
+node_modules
+dist
+dist-ssr
+*.local
+
+# Backend
+.venv/
+venv/
+__pycache__/
+*.pyc
+
 # Logs
 logs
 *.log
@@ -6,11 +23,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
 
 # Editor directories and files
 .vscode/*

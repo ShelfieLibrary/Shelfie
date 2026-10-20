@@ -9,11 +9,11 @@ export async function apiRequest(path, options = {}) {
     headers["Content-Type"] = "application/json";
   }
 
-  if (authenticated) {
-    const token = localStorage.getItem("shelfieToken");
-    if (!token) {
-      throw new Error("Please sign in to continue.");
-    }
+  const token = localStorage.getItem("shelfieToken");
+  if (authenticated && !token) {
+    throw new Error("Please sign in to continue.");
+  }
+  if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
