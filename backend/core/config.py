@@ -16,4 +16,5 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 FRONTEND_ORIGINS = [
     "http://localhost:5173",
     "https://shelfie-sepia.vercel.app",
+    "https://shelfie-sandy-beta.vercel.app",
 ]
