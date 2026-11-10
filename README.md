@@ -5,9 +5,9 @@ Shelfie uses a React/Vite frontend, FastAPI backend, and PostgreSQL database hos
 ## Database setup
 
 1. Open the Supabase SQL Editor.
-2. For a new database, run `database/001_sprint2_tables.sql` first.
-3. Run `database/002_sprint3_reviews_flags.sql` to create `book_reviews` and `content_flags`.
-
+2. For a new database, run `database/001_schema.sql` to create all tables.
+3. To rebuild an existing database from scratch, run `database/000_reset.sql` first, then `database/001_schema.sql`. This deletes all existing data.
+   
 ## Run the backend
 
 These commands do not require an IDE.
@@ -61,4 +61,4 @@ npm run lint
 npm run build
 ```
 
-The deployed frontend is available at https://shelfie-sepia.vercel.app.
+The deployed frontend is available at https://shelfie-sandy-beta.vercel.app
