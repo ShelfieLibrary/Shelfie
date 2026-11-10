@@ -1,0 +1,83 @@
+.widget {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 20;
+  display: grid;
+  justify-items: end;
+  gap: 12px;
+}
+
+.bubble {
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-primary);
+  font-size: 24px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.panel {
+  width: min(340px, calc(100vw - 44px));
+  overflow: hidden;
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.panel header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--color-primary);
+  color: white;
+}
+
+.panel header button {
+  border: none;
+  background: none;
+  color: white;
+  cursor: pointer;
+}
+
+.messages {
+  height: 240px;
+  padding: 14px;
+  overflow-y: auto;
+  background: var(--color-background);
+}
+
+.bot {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px 10px 10px 2px;
+  background: white;
+  font-size: 14px;
+}
+
+.form {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+}
+
+.form input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.form button {
+  padding: 9px 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: white;
+  font-weight: 700;
+  opacity: 0.6;
+}

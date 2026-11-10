@@ -1,0 +1,7 @@
+.avatar {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  line-height: 1;
+}

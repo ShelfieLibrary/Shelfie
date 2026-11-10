@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { saveAccount } from "../api/accounts";
 import { login, register } from "../api/auth";
 import styles from "./LoginForm.module.css";
 import Button from "./ui/Button";
@@ -37,8 +38,7 @@ function LoginForm({ onAuthenticated }) {
       }
 
       const data = await login(email, password);
-      localStorage.setItem("shelfieToken", data.access_token);
-      localStorage.setItem("shelfieUser", JSON.stringify(data.user));
+      saveAccount(data);
       onAuthenticated(data.user);
     } catch (error) {
       setMessageType("error");

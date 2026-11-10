@@ -14,7 +14,7 @@ function BookCard({ book, onAddToShelf, onView }) {
       </button>
       <div className={styles.info}>
         <h3>{book.title}</h3>
-        <p>{book.authors?.length ? book.authors.join(", ") : "Unknown author"}</p>
+        {book.authors?.length > 0 && <p>{book.authors.join(", ")}</p>}
         <p className={styles.rating}>
           {book.average_rating
             ? `★ ${book.average_rating} (${book.rating_count})`

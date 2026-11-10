@@ -8,3 +8,16 @@ export function addToShelf(book, status = "want_to_read") {
     body: JSON.stringify({ book, status }),
   });
 }
+
+
+export function getShelfStatus(bookId) {
+  return apiRequest(`/api/shelf/${encodeURIComponent(bookId)}`, { authenticated: true });
+}
+
+
+export function removeFromShelf(bookId) {
+  return apiRequest(`/api/shelf/${encodeURIComponent(bookId)}`, {
+    method: "DELETE",
+    authenticated: true,
+  });
+}

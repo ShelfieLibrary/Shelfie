@@ -1,0 +1,19 @@
+.select,
+.saved {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.select {
+  border: none;
+  background: var(--color-primary);
+  color: white;
+}
+
+.saved {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}

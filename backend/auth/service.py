@@ -28,10 +28,34 @@ def login_user(email: str, password: str):
     if not response.user or not response.session:
         raise ValueError("Login failed.")
 
-    user_id = str(response.user.id)
+    return {
+        "success": True,
+        "message": "Login successful",
+        "access_token": response.session.access_token,
+        "refresh_token": response.session.refresh_token,
+        "user": get_user_profile(response.user),
+    }
+
+
+def refresh_user_session(refresh_token: str):
+    response = supabase.auth.refresh_session(refresh_token)
+
+    if not response.user or not response.session:
+        raise ValueError("Session expired. Please sign in again.")
+
+    return {
+        "success": True,
+        "access_token": response.session.access_token,
+        "refresh_token": response.session.refresh_token,
+        "user": get_user_profile(response.user),
+    }
+
+
+def get_user_profile(auth_user):
+    user_id = str(auth_user.id)
     profile_response = (
         supabase.table("profiles")
-        .select("display_name,role,account_status")
+        .select("display_name,avatar_url,role,account_status")
         .eq("id", user_id)
         .execute()
     )
@@ -43,18 +67,7 @@ def login_user(email: str, password: str):
     if profile["account_status"] != "active":
         raise ValueError("This account is not active.")
 
-    return {
-        "success": True,
-        "message": "Login successful",
-        "access_token": response.session.access_token,
-        "user": {
-            "id": user_id,
-            "email": response.user.email,
-            "display_name": profile["display_name"],
-            "role": profile["role"],
-            "account_status": profile["account_status"],
-        },
-    }
+    return {"id": user_id, "email": auth_user.email, **profile}
 
 
 def logout_user():

@@ -1,15 +1,17 @@
 import { useState } from "react";
 
+import Avatar from "./Avatar";
 import styles from "./ReviewCard.module.css";
 import Button from "./ui/Button";
 
 
-function ReviewCard({ review, onUpdate, onDelete, onFlag, onRequireLogin }) {
+function ReviewCard({ review, onUpdate, onDelete, onFlag, onRequireLogin, onOpenProfile }) {
   const [editing, setEditing] = useState(false);
   const [rating, setRating] = useState(review.rating);
   const [reviewText, setReviewText] = useState(review.review_text);
   const [flagging, setFlagging] = useState(false);
   const [reason, setReason] = useState("");
+  const [notice, setNotice] = useState(null);
 
   async function handleUpdate(event) {
     event.preventDefault();
@@ -19,7 +21,12 @@ function ReviewCard({ review, onUpdate, onDelete, onFlag, onRequireLogin }) {
 
   async function handleFlag(event) {
     event.preventDefault();
-    await onFlag(review.id, reason);
+    try {
+      const data = await onFlag(review.id, reason);
+      setNotice({ text: data.message, type: "success" });
+    } catch (error) {
+      setNotice({ text: error.message, type: "error" });
+    }
     setReason("");
     setFlagging(false);
   }
@@ -27,7 +34,14 @@ function ReviewCard({ review, onUpdate, onDelete, onFlag, onRequireLogin }) {
   return (
     <article className={styles.card}>
       <div className={styles.heading}>
-        <strong>{review.display_name}</strong>
+        <button
+          type="button"
+          className={styles.author}
+          onClick={() => onOpenProfile(review.user_id)}
+        >
+          <Avatar avatar={review.avatar_url} size={28} />
+          <strong>{review.display_name}</strong>
+        </button>
         <span aria-label={`${review.rating} out of 5 stars`}>
           {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
         </span>
@@ -47,7 +61,7 @@ function ReviewCard({ review, onUpdate, onDelete, onFlag, onRequireLogin }) {
             value={reviewText}
             onChange={(event) => setReviewText(event.target.value)}
             maxLength="2000"
-            required
+            placeholder="Your review (optional)"
           />
           <div className={styles.actions}>
             <Button type="submit">Save</Button>
@@ -57,7 +71,7 @@ function ReviewCard({ review, onUpdate, onDelete, onFlag, onRequireLogin }) {
           </div>
         </form>
       ) : (
-        <p className={styles.reviewText}>{review.review_text}</p>
+        review.review_text && <p className={styles.reviewText}>{review.review_text}</p>
       )}
 
       {!editing && review.is_owner && (
@@ -98,6 +112,11 @@ function ReviewCard({ review, onUpdate, onDelete, onFlag, onRequireLogin }) {
             </Button>
           </div>
         </form>
+      )}
+      {notice && (
+        <p className={notice.type === "success" ? styles.success : styles.error}>
+          {notice.text}
+        </p>
       )}
     </article>
   );

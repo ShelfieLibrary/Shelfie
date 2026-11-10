@@ -54,3 +54,37 @@
   min-height: 100px;
   resize: vertical;
 }
+
+.author {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.author:hover strong {
+  text-decoration: underline;
+}
+
+.success,
+.error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.success {
+  background: #edf7ed;
+  color: var(--color-success);
+}
+
+.error {
+  background: #fff0f0;
+  color: var(--color-error);
+}

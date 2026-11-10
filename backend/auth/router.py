@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from auth import service
-from auth.schemas import LoginRequest, RegisterRequest
+from auth.schemas import LoginRequest, RefreshRequest, RegisterRequest
 from core.auth import get_authenticated_user
 
 
@@ -24,14 +24,20 @@ def login(data: LoginRequest):
         return {"success": False, "message": str(error)}
 
 
+@router.post("/refresh")
+def refresh(data: RefreshRequest):
+    try:
+        return service.refresh_user_session(data.refresh_token)
+    except Exception as error:
+        raise HTTPException(status_code=401, detail=str(error)) from error
+
+
 @router.get("/session")
 def session(user=Depends(get_authenticated_user)):
-    return {
-        "success": True,
-        "message": "Session is valid",
-        "user_id": str(user.id),
-        "email": user.email,
-    }
+    try:
+        return {"success": True, "user": service.get_user_profile(user)}
+    except ValueError as error:
+        raise HTTPException(status_code=401, detail=str(error)) from error
 
 
 @router.post("/logout")

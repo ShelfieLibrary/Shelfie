@@ -17,6 +17,11 @@ export function register(displayName, email, password) {
 }
 
 
+export function getSession() {
+  return apiRequest("/api/session", { authenticated: true });
+}
+
+
 export function logout() {
   return apiRequest("/api/logout", { method: "POST" });
 }
