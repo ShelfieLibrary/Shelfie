@@ -61,4 +61,4 @@ npm run lint
 npm run build
 ```
 
-The deployed frontend is available at https://shelfie-sepia.vercel.app.
+The deployed frontend is available at https://shelfie-sandy-beta.vercel.app
