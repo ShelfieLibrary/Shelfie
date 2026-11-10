@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from admin import service
 from admin.schemas import AnnouncementRequest, UserUpdateRequest
 from core.auth import get_authenticated_user
-from core.database import admin_supabase, supabase
+from core.database import admin_supabase
 from notifications.service import send_announcement
 
 
@@ -11,8 +11,10 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
 def require_admin(user=Depends(get_authenticated_user)):
+    if not admin_supabase:
+        raise HTTPException(status_code=503, detail="SUPABASE_SERVICE_KEY is not configured.")
     profile = (
-        supabase.table("profiles")
+        admin_supabase.table("profiles")
         .select("role, account_status")
         .eq("id", str(user.id))
         .execute()
@@ -20,8 +22,6 @@ def require_admin(user=Depends(get_authenticated_user)):
     )
     if not profile or profile[0]["role"] != "admin" or profile[0]["account_status"] != "active":
         raise HTTPException(status_code=403, detail="Administrator access is required.")
-    if not admin_supabase:
-        raise HTTPException(status_code=503, detail="SUPABASE_SERVICE_KEY is not configured.")
     return user
 
 
