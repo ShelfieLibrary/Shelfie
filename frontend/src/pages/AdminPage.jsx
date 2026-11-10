@@ -22,6 +22,13 @@ const STAT_LABELS = {
 };
 const FLAG_STATUSES = ["pending", "resolved", "dismissed"];
 
+// Admin requests run one at a time; the backend fails when several arrive at once.
+let lastRequest = Promise.resolve();
+function queued(request) {
+  lastRequest = lastRequest.catch(() => {}).then(request);
+  return lastRequest;
+}
+
 
 function formatDate(value) {
   return value ? new Date(value).toLocaleString() : "";
@@ -43,18 +50,18 @@ function AdminPage({ user, onOpenProfile }) {
   }
 
   function loadStats() {
-    getStats().then((data) => setStats(data.stats)).catch((error) => report(error.message, "error"));
+    queued(getStats).then((data) => setStats(data.stats)).catch((error) => report(error.message, "error"));
   }
 
   function loadQueue() {
     setQueue(null);
-    getFlags(flagStatus)
+    queued(() => getFlags(flagStatus))
       .then((data) => setQueue(data.items))
       .catch((error) => report(error.message, "error"));
   }
 
   function loadUsers() {
-    getUsers().then((data) => setUsers(data.users)).catch((error) => report(error.message, "error"));
+    queued(getUsers).then((data) => setUsers(data.users)).catch((error) => report(error.message, "error"));
   }
 
   useEffect(loadStats, []);

@@ -44,18 +44,35 @@
 }
 
 .messages {
-  height: 240px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  height: 300px;
   padding: 14px;
   overflow-y: auto;
   background: var(--color-background);
 }
 
-.bot {
+.bot,
+.user {
+  max-width: 85%;
   margin: 0;
   padding: 10px 12px;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.bot {
+  justify-self: start;
   border-radius: 10px 10px 10px 2px;
   background: white;
-  font-size: 14px;
+}
+
+.user {
+  justify-self: end;
+  border-radius: 10px 10px 2px 10px;
+  background: var(--color-primary);
+  color: white;
 }
 
 .form {
@@ -79,5 +96,10 @@
   background: var(--color-primary);
   color: white;
   font-weight: 700;
+  cursor: pointer;
+}
+
+.form button:disabled {
   opacity: 0.6;
+  cursor: default;
 }

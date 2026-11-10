@@ -102,7 +102,7 @@ function ProfilePage({ userId, user, onRequireLogin, onOpenProfile, onProfileUpd
     <main className={styles.profile}>
       <section className={styles.header}>
         <div className={styles.identity}>
-          <Avatar avatar={profile?.avatar_url} size={64} />
+          <Avatar avatar={profile?.avatar_url} size={76} />
           <div>
             <h1>{name || "Reader"}</h1>
             {isOwn && (
@@ -119,18 +119,31 @@ function ProfilePage({ userId, user, onRequireLogin, onOpenProfile, onProfileUpd
           </div>
         </div>
 
-        <div className={styles.stats}>
+        {current && (
+          <button type="button" className={styles.current} onClick={() => setSelectedBook(current)}>
+            <Cover book={current} />
+            <span>
+              <span className={styles.currentLabel}>Currently reading</span>
+              <strong>{current.title}</strong>
+              {current.authors.length > 0 && (
+                <span className={styles.muted}>{current.authors.join(", ")}</span>
+              )}
+            </span>
+          </button>
+        )}
+
+        <dl className={styles.stats}>
           {Object.entries(SHELVES).map(([status, label]) => (
             <div key={status}>
-              <strong>{data ? data.counts[status] : "–"}</strong>
-              <span>{label}</span>
+              <dt>{label}</dt>
+              <dd>{data ? data.counts[status] : "–"}</dd>
             </div>
           ))}
           <div>
-            <strong>{data ? data.reviews.length : "–"}</strong>
-            <span>Reviews</span>
+            <dt>Reviews</dt>
+            <dd>{data ? data.reviews.length : "–"}</dd>
           </div>
-        </div>
+        </dl>
       </section>
 
       {editing && (
@@ -169,19 +182,6 @@ function ProfilePage({ userId, user, onRequireLogin, onOpenProfile, onProfileUpd
         </form>
       )}
 
-      {current && (
-        <section className={styles.panel}>
-          <h2>Currently reading</h2>
-          <button type="button" className={styles.current} onClick={() => setSelectedBook(current)}>
-            <Cover book={current} />
-            <span>
-              <strong>{current.title}</strong>
-              <span className={styles.muted}>{current.authors.join(", ")}</span>
-            </span>
-          </button>
-        </section>
-      )}
-
       <section className={styles.panel}>
         <div className={styles.panelHeader}>
           <h2>Reading list</h2>
@@ -202,31 +202,31 @@ function ProfilePage({ userId, user, onRequireLogin, onOpenProfile, onProfileUpd
         {shelves.map((status) => (
           <div key={status} className={styles.shelf}>
             <h3>
-              {SHELVES[status]} <span>({data?.counts[status] ?? 0})</span>
+              {SHELVES[status]} <span>{data?.counts[status] ?? 0}</span>
             </h3>
-            {!data ? (
-              <div className={styles.grid}>
-                {Array.from({ length: 5 }, (_, index) => (
+            <div className={styles.ledge}>
+              {!data ? (
+                Array.from({ length: 5 }, (_, index) => (
                   <div key={index} className={`skeleton ${styles.cover}`} />
-                ))}
-              </div>
-            ) : data.shelf[status].length ? (
-              <div className={styles.grid}>
-                {data.shelf[status].map((book) => (
+                ))
+              ) : data.shelf[status].length ? (
+                data.shelf[status].map((book) => (
                   <button
                     key={book.id}
                     type="button"
                     className={styles.tile}
                     onClick={() => setSelectedBook(book)}
+                    title={book.title}
                   >
                     <Cover book={book} />
-                    <span className={styles.tileTitle}>{book.title}</span>
                   </button>
-                ))}
-              </div>
-            ) : (
-              <p className={styles.muted}>No books here yet.</p>
-            )}
+                ))
+              ) : (
+                <p className={styles.empty}>
+                  {isOwn ? "Nothing here yet. Search for a book to add it." : "Nothing here yet."}
+                </p>
+              )}
+            </div>
           </div>
         ))}
       </section>
@@ -242,12 +242,15 @@ function ProfilePage({ userId, user, onRequireLogin, onOpenProfile, onProfileUpd
             {data.reviews.map((review) => (
               <li key={review.id}>
                 <button type="button" onClick={() => review.books && setSelectedBook(review.books)}>
-                  <strong>{review.books?.title || "A book"}</strong>
-                  <span className={styles.stars}>
-                    {"★".repeat(review.rating)}
-                    {"☆".repeat(5 - review.rating)}
+                  {review.books && <Cover book={review.books} />}
+                  <span className={styles.reviewText}>
+                    <strong>{review.books?.title || "A book"}</strong>
+                    <span className={styles.stars} aria-label={`${review.rating} out of 5 stars`}>
+                      {"★".repeat(review.rating)}
+                      {"☆".repeat(5 - review.rating)}
+                    </span>
+                    {review.review_text && <span>{review.review_text}</span>}
                   </span>
-                  {review.review_text && <span>{review.review_text}</span>}
                 </button>
               </li>
             ))}

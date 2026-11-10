@@ -63,11 +63,7 @@ def get_user_profile(auth_user):
     if not profile_response.data:
         raise ValueError("User profile could not be found.")
 
-    profile = profile_response.data[0]
-    if profile["account_status"] != "active":
-        raise ValueError("This account is not active.")
-
-    return {"id": user_id, "email": auth_user.email, **profile}
+    return {"id": user_id, "email": auth_user.email, **profile_response.data[0]}
 
 
 def logout_user():

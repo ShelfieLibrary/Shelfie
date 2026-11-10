@@ -1,0 +1,14 @@
+.item {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.reason {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--color-primary);
+  border-radius: 6px;
+  background: var(--color-primary-soft);
+  font-size: 14px;
+}

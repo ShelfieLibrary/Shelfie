@@ -10,6 +10,7 @@ from flags.router import router as flags_router
 from profiles.router import router as profiles_router
 from admin.router import router as admin_router
 from notifications.router import router as notifications_router
+from ai.router import router as ai_router
 
 app = FastAPI(title="Shelfie API")
 
@@ -29,6 +30,7 @@ app.include_router(flags_router)
 app.include_router(profiles_router)
 app.include_router(admin_router)
 app.include_router(notifications_router)
+app.include_router(ai_router)
 
 @app.get("/")
 def home():

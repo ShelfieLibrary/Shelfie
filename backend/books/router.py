@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from books.service import book_content, featured_books, home_feed, search_books
 from core.auth import get_optional_user
@@ -9,8 +9,8 @@ router = APIRouter(prefix="/api/books", tags=["books"])
 
 
 @router.get("/search")
-def search(q: str):
-    return search_books(q)
+def search(q: str, page: int = Query(default=1, ge=1, le=20)):
+    return search_books(q, page)
 
 
 @router.get("/featured")

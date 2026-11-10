@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { getRecommendations } from "../api/ai";
 import { getHomeFeed } from "../api/books";
 import { addToShelf } from "../api/shelf";
 import BookCard from "../components/BookCard";
@@ -34,8 +35,37 @@ function SkeletonRows({ count, height }) {
 }
 
 
-function Dashboard({ user, search, onClearSearch, onOpenPage, onOpenProfile, onRequireLogin }) {
+// A single row of covers. Covers that don't fit on one line are hidden, so the row is always full.
+function BookRow({ books, onSelect }) {
+  return (
+    <div className={styles.bookRow}>
+      {!books
+        ? Array.from({ length: 10 }, (_, index) => (
+            <div key={index} className={`skeleton ${styles.tileCover}`} />
+          ))
+        : books.map((book) => (
+            <button key={book.id} type="button" className={styles.tile} onClick={() => onSelect(book)}>
+              <Cover book={book} className={styles.tileCover} />
+              <span className={styles.tileTitle}>{book.title}</span>
+              <Rating book={book} />
+            </button>
+          ))}
+    </div>
+  );
+}
+
+
+function Dashboard({
+  user,
+  search,
+  onClearSearch,
+  onLoadMore,
+  onOpenPage,
+  onOpenProfile,
+  onRequireLogin,
+}) {
   const [feed, setFeed] = useState(null);
+  const [recommended, setRecommended] = useState(null);
   const [selectedBook, setSelectedBook] = useState(null);
   const [message, setMessage] = useState(null);
 
@@ -48,6 +78,13 @@ function Dashboard({ user, search, onClearSearch, onOpenPage, onOpenProfile, onR
       })
       .catch(() => {
         if (!cancelled) setFeed({ recent: [], trending: [], latest_reviews: [] });
+      })
+      .then(() => user && getRecommendations())
+      .then((data) => {
+        if (!cancelled && data) setRecommended(data);
+      })
+      .catch((error) => {
+        if (!cancelled) setRecommended({ books: [], message: error.message });
       });
 
     return () => {
@@ -112,33 +149,65 @@ function Dashboard({ user, search, onClearSearch, onOpenPage, onOpenProfile, onR
             />
           ))}
         </div>
+        {search.hasMore && (
+          <div className={styles.loadMore}>
+            <Button type="button" variant="secondary" onClick={onLoadMore} disabled={search.loadingMore}>
+              {search.loadingMore ? "Loading…" : "Load more"}
+            </Button>
+          </div>
+        )}
       </main>
     );
   }
 
+  const featured = feed?.trending[0] || feed?.recent[0];
+
   return (
     <main className={styles.dashboard}>
-      <section className={styles.hero}>
-        {user ? (
-          <>
-            <p className={styles.eyebrow}>Welcome back</p>
-            <h1>{user.display_name || "Reader"}</h1>
-            <p className={styles.muted}>
-              Find your next book, see what other readers think, and keep your
-              reading list up to date from your profile.
+      {!feed ? (
+        <div className={`skeleton ${styles.featuredSkeleton}`} />
+      ) : featured ? (
+        <section className={styles.featured}>
+          <button type="button" className={styles.featuredCover} onClick={() => setSelectedBook(featured)}>
+            <Cover book={featured} className={styles.bigCover} />
+          </button>
+          <div className={styles.featuredText}>
+            {!user && (
+              <p className={styles.intro}>
+                Shelfie is where readers track, rate, and review the books they love.
+              </p>
+            )}
+            <p className={styles.featuredLabel}>
+              {feed.trending[0] ? "Trending on Shelfie" : "New on Shelfie"}
             </p>
-          </>
-        ) : (
-          <>
-            <p className={styles.eyebrow}>Your digital bookshelf</p>
-            <h1>Track, review, and discover books</h1>
-            <p className={styles.muted}>
-              Search any book, read what others think, and build your own shelf.
+            <h1>{featured.title}</h1>
+            <p className={styles.byline}>
+              {featured.authors.join(", ")}
+              {featured.average_rating && (
+                <span className={styles.rating}>
+                  {" "}★ {featured.average_rating} from {featured.rating_count}{" "}
+                  {featured.rating_count === 1 ? "reader" : "readers"}
+                </span>
+              )}
             </p>
-            <Button onClick={onRequireLogin}>Get started</Button>
-          </>
-        )}
-      </section>
+            {featured.description && (
+              <p className={styles.description}>{featured.description}</p>
+            )}
+            <div className={styles.featuredActions}>
+              <Button onClick={() => setSelectedBook(featured)}>View book</Button>
+              {user ? (
+                <Button variant="secondary" onClick={() => handleAddToShelf(featured)}>
+                  Add to shelf
+                </Button>
+              ) : (
+                <Button variant="secondary" onClick={onRequireLogin}>
+                  Get started
+                </Button>
+              )}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {notice}
 
@@ -147,47 +216,22 @@ function Dashboard({ user, search, onClearSearch, onOpenPage, onOpenProfile, onR
           <div className={styles.sectionHeader}>
             <h2>Recommended for you</h2>
             <button type="button" className={styles.link} onClick={() => onOpenPage("recommendations")}>
-              Get recommendations →
+              See all
             </button>
           </div>
-          <div className={styles.row}>
-            {Array.from({ length: 6 }, (_, index) => (
-              <div key={index} className={styles.placeholderTile} />
-            ))}
-          </div>
-          <p className={styles.muted}>
-            AI recommendations based on your reading list are coming soon.
-          </p>
+          {recommended?.message && <p className={styles.muted}>{recommended.message}</p>}
+          <BookRow books={recommended?.books} onSelect={setSelectedBook} />
         </section>
       )}
 
       <section className={styles.panel}>
-        <div className={styles.sectionHeader}>
-          <h2>Recently added on Shelfie</h2>
-        </div>
-        <div className={styles.row}>
-          {!feed &&
-            Array.from({ length: 6 }, (_, index) => (
-              <div key={index} className={`skeleton ${styles.placeholderTile}`} />
-            ))}
-          {feed?.recent.map((book) => (
-            <button
-              key={book.id}
-              type="button"
-              className={styles.tile}
-              onClick={() => setSelectedBook(book)}
-            >
-              <Cover book={book} className={styles.tileCover} />
-              <span className={styles.tileTitle}>{book.title}</span>
-              <Rating book={book} />
-            </button>
-          ))}
-        </div>
+        <h2>Recently added on Shelfie</h2>
+        <BookRow books={feed?.recent} onSelect={setSelectedBook} />
       </section>
 
       <div className={styles.columns}>
         <section className={styles.panel}>
-          <h2>Trending on Shelfie</h2>
+          <h2>Trending</h2>
           {!feed ? (
             <SkeletonRows count={4} height={62} />
           ) : feed.trending.length ? (
@@ -207,7 +251,7 @@ function Dashboard({ user, search, onClearSearch, onOpenPage, onOpenProfile, onR
               ))}
             </ol>
           ) : (
-            <p className={styles.muted}>No rated books yet.</p>
+            <p className={styles.muted}>Add books to your shelf or review them to see what's trending.</p>
           )}
         </section>
 
@@ -223,17 +267,17 @@ function Dashboard({ user, search, onClearSearch, onOpenPage, onOpenProfile, onR
                     type="button"
                     onClick={() => review.book && setSelectedBook(review.book)}
                   >
+                    {review.book && <Cover book={review.book} className={styles.listCover} />}
                     <span className={styles.listText}>
+                      <strong>{review.book?.title || "A book"}</strong>
                       <span className={styles.rating}>
                         {"★".repeat(review.rating)}
                         {"☆".repeat(5 - review.rating)}
+                        <span className={styles.reviewer}> {review.display_name}</span>
                       </span>
                       {review.review_text && (
                         <span className={styles.quote}>“{review.review_text}”</span>
                       )}
-                      <span>
-                        on {review.book?.title || "a book"} · {review.display_name}
-                      </span>
                     </span>
                   </button>
                 </li>
@@ -247,5 +291,6 @@ function Dashboard({ user, search, onClearSearch, onOpenPage, onOpenProfile, onR
     </main>
   );
 }
+
 
 export default Dashboard;

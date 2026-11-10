@@ -8,8 +8,9 @@ export function getHomeFeed() {
   return apiRequest("/api/books/home");
 }
 
-export function searchBooks(searchTerm) {
-  return apiRequest(`/api/books/search?q=${encodeURIComponent(searchTerm)}`);
+export function searchBooks(searchTerm, page = 1) {
+  const params = new URLSearchParams({ q: searchTerm, page });
+  return apiRequest(`/api/books/search?${params}`);
 }
 
 export function getBookContent(book) {

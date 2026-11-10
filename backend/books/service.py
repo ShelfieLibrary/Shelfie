@@ -12,6 +12,7 @@ from core.database import supabase
 
 
 CACHE_SECONDS = 600
+PAGE_SIZE = 12
 _search_cache = {}
 
 
@@ -63,8 +64,11 @@ def _format_open_library_book(doc):
     }
 
 
-def _fetch_google_books(query: str):
-    url = f"https://www.googleapis.com/books/v1/volumes?q={quote(query, safe=':')}&maxResults=12"
+def _fetch_google_books(query: str, page: int):
+    url = (
+        f"https://www.googleapis.com/books/v1/volumes?q={quote(query, safe=':')}"
+        f"&maxResults={PAGE_SIZE}&startIndex={(page - 1) * PAGE_SIZE}"
+    )
     if GOOGLE_BOOKS_API_KEY:
         url += f"&key={GOOGLE_BOOKS_API_KEY}"
 
@@ -72,9 +76,12 @@ def _fetch_google_books(query: str):
     return [_format_google_book(item) for item in data.get("items", [])]
 
 
-def _fetch_open_library(query: str):
+def _fetch_open_library(query: str, page: int):
     fields = "key,title,author_name,first_publish_year,isbn,cover_i,number_of_pages_median"
-    url = f"https://openlibrary.org/search.json?q={quote(query, safe=':')}&limit=12&fields={fields}"
+    url = (
+        f"https://openlibrary.org/search.json?q={quote(query, safe=':')}"
+        f"&limit={PAGE_SIZE}&page={page}&fields={fields}"
+    )
 
     data = _get_json(url)
     return [_format_open_library_book(doc) for doc in data.get("docs", [])]
@@ -101,12 +108,12 @@ SEARCH_SOURCES = {
 }
 
 
-def _find_books(search_term: str):
+def _find_books(search_term: str, page: int):
     query = search_term.strip()
     if not query:
         return {"success": False, "message": "Please enter a search term.", "books": []}
 
-    cache_key = query.casefold()
+    cache_key = (query.casefold(), page)
     cached = _search_cache.get(cache_key)
     if cached and time.time() - cached["time"] < CACHE_SECONDS:
         return cached["result"]
@@ -114,17 +121,23 @@ def _find_books(search_term: str):
     errors = {}
     for source, fetch in SEARCH_SOURCES.items():
         try:
-            books = fetch(query)
+            books = fetch(query, page)
         except Exception as error:
             errors[source] = str(error)
             continue
 
         if books:
-            result = {"success": True, "source": source, "count": len(books), "books": books}
+            result = {
+                "success": True,
+                "source": source,
+                "count": len(books),
+                "books": books,
+                "has_more": len(books) == PAGE_SIZE,
+            }
             _search_cache[cache_key] = {"time": time.time(), "result": result}
             return result
 
-    books = _search_saved_books(query)
+    books = _search_saved_books(query) if page == 1 else []
     return {
         "success": True,
         "source": "saved_books_fallback",
@@ -132,6 +145,7 @@ def _find_books(search_term: str):
         "errors": errors,
         "count": len(books),
         "books": books,
+        "has_more": False,
     }
 
 
@@ -195,8 +209,8 @@ def _merge_editions(books):
     return list(best.values())
 
 
-def search_books(search_term: str):
-    result = _find_books(search_term)
+def search_books(search_term: str, page: int = 1):
+    result = _find_books(search_term, page)
     if result.get("books"):
         books = _merge_editions(result["books"])
         result = {**result, "count": len(books), "books": _attach_ratings(books)}
@@ -241,18 +255,26 @@ def _books_by_id(ids):
     return {book["id"]: {**book, "authors": book.get("authors") or []} for book in response.data}
 
 
+# Trending score: a review counts twice as much as a shelf add, plus the book's average rating.
+REVIEW_WEIGHT = 2
+
+
 def _trending_books(limit: int):
-    response = supabase.table("book_reviews").select("book_id, rating").execute()
+    reviews = supabase.table("book_reviews").select("book_id, rating").execute().data
+    shelved = supabase.table("user_books").select("book_id").execute().data
 
     ratings = {}
-    for review in response.data:
+    for review in reviews:
         ratings.setdefault(review["book_id"], []).append(review["rating"])
 
-    ranked = sorted(
-        ratings,
-        key=lambda book_id: (sum(ratings[book_id]) / len(ratings[book_id]), len(ratings[book_id])),
-        reverse=True,
-    )[:limit]
+    scores = {}
+    for row in shelved:
+        scores[row["book_id"]] = scores.get(row["book_id"], 0) + 1
+    for book_id, values in ratings.items():
+        average = sum(values) / len(values)
+        scores[book_id] = scores.get(book_id, 0) + REVIEW_WEIGHT * len(values) + average
+
+    ranked = sorted(scores, key=scores.get, reverse=True)[:limit]
     books = _books_by_id(ranked)
     return _attach_ratings([books[book_id] for book_id in ranked if book_id in books])
 
@@ -309,8 +331,8 @@ def _user_shelf(user_id: str):
 def home_feed(user_id: str | None):
     return {
         "success": True,
-        "recent": featured_books(8)["books"],
-        "trending": _trending_books(5),
+        "recent": featured_books(16)["books"],
+        "trending": _trending_books(6),
         "latest_reviews": _latest_reviews(4),
         "shelf": _user_shelf(user_id) if user_id else None,
     }

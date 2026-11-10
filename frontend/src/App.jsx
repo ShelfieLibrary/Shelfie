@@ -12,7 +12,6 @@ import { searchBooks } from "./api/books";
 import { getUnreadCount } from "./api/notifications";
 import AccountMenu from "./components/AccountMenu";
 import ChatWidget from "./components/ChatWidget";
-import ComingSoon from "./components/ComingSoon";
 import BookSearch from "./components/BookSearch";
 import Button from "./components/ui/Button";
 import AdminPage from "./pages/AdminPage";
@@ -20,21 +19,8 @@ import Dashboard from "./pages/Dashboard";
 import NotificationsPage from "./pages/NotificationsPage";
 import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
+import RecommendationsPage from "./pages/RecommendationsPage";
 import styles from "./App.module.css";
-
-
-const PLACEHOLDER_PAGES = {
-  recommendations: {
-    icon: "✨",
-    title: "Recommended for You",
-    description: "Personalized picks based on your reading list and ratings.",
-    features: [
-      "AI-selected books matched to your reading history",
-      "A short reason for each recommendation",
-      "Add a recommendation straight to your reading list",
-    ],
-  },
-};
 
 
 function App() {
@@ -95,18 +81,44 @@ function App() {
     event.preventDefault();
     setHomeKey((key) => key + 1);
     setPage("dashboard");
+    const term = searchTerm.trim();
     setSearch({ loading: true, books: [], message: "" });
 
     try {
-      const data = await searchBooks(searchTerm.trim());
+      const data = await searchBooks(term);
       const books = data.books || [];
       setSearch({
         loading: false,
         books,
         message: books.length ? "" : "No matching books were found.",
+        term,
+        page: 1,
+        hasMore: data.has_more,
       });
     } catch (error) {
       setSearch({ loading: false, books: [], message: error.message });
+    }
+  }
+
+  async function loadMoreResults() {
+    const page = search.page + 1;
+    setSearch({ ...search, loadingMore: true });
+
+    try {
+      const data = await searchBooks(search.term, page);
+      setSearch((current) => {
+        const seen = new Set(current.books.map((book) => book.id));
+        const books = (data.books || []).filter((book) => !seen.has(book.id));
+        return {
+          ...current,
+          books: [...current.books, ...books],
+          page,
+          hasMore: data.has_more,
+          loadingMore: false,
+        };
+      });
+    } catch (error) {
+      setSearch((current) => ({ ...current, loadingMore: false, message: error.message }));
     }
   }
 
@@ -161,6 +173,35 @@ function App() {
     );
   }
 
+  const accountMenu = user && (
+    <AccountMenu
+      user={user}
+      accounts={accounts}
+      onSwitch={handleSwitch}
+      onAddAccount={() => setShowLogin(true)}
+      onProfile={() => openPage("profile")}
+      onLogout={handleLogout}
+    />
+  );
+
+  if (user?.account_status === "suspended") {
+    return (
+      <div className={styles.app}>
+        <header className={styles.navbar}>
+          <span className={styles.brand}>Shelfie</span>
+          <div className={styles.navUser}>{accountMenu}</div>
+        </header>
+        <main className={styles.suspended}>
+          <h1>Your account is suspended</h1>
+          <p>
+            An administrator has suspended this account, so you can't use Shelfie right now.
+            You can switch to another account or log out from the menu above.
+          </p>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.app}>
       <header className={styles.navbar}>
@@ -206,14 +247,7 @@ function App() {
             </button>
           )}
           {user ? (
-            <AccountMenu
-              user={user}
-              accounts={accounts}
-              onSwitch={handleSwitch}
-              onAddAccount={() => setShowLogin(true)}
-              onProfile={() => openPage("profile")}
-              onLogout={handleLogout}
-            />
+            accountMenu
           ) : (
             <Button onClick={() => setShowLogin(true)}>Log In</Button>
           )}
@@ -239,13 +273,19 @@ function App() {
           onOpenProfile={openProfile}
           onUnreadChange={setUnread}
         />
-      ) : PLACEHOLDER_PAGES[page] && user ? (
-        <ComingSoon {...PLACEHOLDER_PAGES[page]} />
+      ) : page === "recommendations" && user ? (
+        <RecommendationsPage
+          key={homeKey}
+          user={user}
+          onRequireLogin={() => setShowLogin(true)}
+          onOpenProfile={openProfile}
+        />
       ) : (
         <Dashboard
           key={`${user?.id || "guest"}-${homeKey}`}
           user={user}
           search={search}
+          onLoadMore={loadMoreResults}
           onClearSearch={goHome}
           onOpenPage={openPage}
           onOpenProfile={openProfile}
