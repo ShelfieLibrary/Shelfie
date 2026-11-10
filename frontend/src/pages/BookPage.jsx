@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { getBookPreview } from "../api/books";
 import {
   createReview,
   deleteReview,
@@ -61,12 +62,9 @@ function BookPage({ book, user, onBack, onRequireLogin, onOpenProfile }) {
     if (!book.id || book.id.startsWith("ol-")) return;
 
     let cancelled = false;
-    fetch(`https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(book.id)}?fields=accessInfo(embeddable,viewability)`)
-      .then((response) => response.json())
-      .then(({ accessInfo }) => {
-        if (!cancelled) {
-          setCanEmbed(accessInfo?.embeddable && accessInfo.viewability !== "NO_PAGES");
-        }
+    getBookPreview(book.id)
+      .then((data) => {
+        if (!cancelled) setCanEmbed(data.embeddable);
       })
       .catch(() => {});
 

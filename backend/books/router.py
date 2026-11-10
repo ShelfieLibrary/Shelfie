@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
-from books.service import book_content, featured_books, home_feed, search_books
+from books.service import book_content, book_preview, featured_books, home_feed, search_books
 from core.auth import get_optional_user
 from core.errors import database_error
 
@@ -24,6 +24,14 @@ def content(title: str, author: str = ""):
         return book_content(title, author)
     except Exception as error:
         return {"success": True, "available": False, "text": None, "errors": {"text": str(error)}}
+
+
+@router.get("/{book_id}/preview")
+def preview(book_id: str):
+    try:
+        return book_preview(book_id)
+    except Exception:
+        return {"success": True, "embeddable": False}
 
 
 @router.get("/home")

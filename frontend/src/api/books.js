@@ -13,6 +13,10 @@ export function searchBooks(searchTerm, page = 1) {
   return apiRequest(`/api/books/search?${params}`);
 }
 
+export function getBookPreview(bookId) {
+  return apiRequest(`/api/books/${encodeURIComponent(bookId)}/preview`);
+}
+
 export function getBookContent(book) {
   const params = new URLSearchParams({
     title: book.title,

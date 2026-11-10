@@ -217,6 +217,24 @@ def search_books(search_term: str, page: int = 1):
     return result
 
 
+_preview_cache = {}
+
+
+def book_preview(book_id: str):
+    if book_id not in _preview_cache:
+        url = (
+            f"https://www.googleapis.com/books/v1/volumes/{quote(book_id)}"
+            "?fields=accessInfo(embeddable,viewability)"
+        )
+        if GOOGLE_BOOKS_API_KEY:
+            url += f"&key={GOOGLE_BOOKS_API_KEY}"
+        access = _get_json(url).get("accessInfo", {})
+        _preview_cache[book_id] = bool(
+            access.get("embeddable") and access.get("viewability") != "NO_PAGES"
+        )
+    return {"success": True, "embeddable": _preview_cache[book_id]}
+
+
 def featured_books(limit: int = 6):
     try:
         response = (
